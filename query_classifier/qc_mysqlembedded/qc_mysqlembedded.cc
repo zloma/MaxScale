@@ -2842,6 +2842,10 @@ int32_t qc_mysql_process_init(void)
 #endif
             MXS_NOTICE("Query classifier initialized.");
             inited = true;
+
+#if MYSQL_VERSION_MINOR >= 3
+            global_system_variables.sql_mode |= MODE_ORACLE;
+#endif
         }
     }
 
