@@ -2814,7 +2814,7 @@ int32_t qc_mysql_setup(const char* zArgs)
         strcpy(args, zArgs);
 
         char *p1;
-        char *token = strtok_r(args, ";", &p1);
+        char *token = strtok_r(args, ",", &p1);
 
         while (token)
         {
@@ -2839,7 +2839,7 @@ int32_t qc_mysql_setup(const char* zArgs)
                 MXS_WARNING("Unknown argument \"%s\".", key);
             }
 
-            token = strtok_r(NULL, ";", &p1);
+            token = strtok_r(NULL, ",", &p1);
         }
 #else
         MXS_WARNING("'%s' provided as arguments, "
