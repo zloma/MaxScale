@@ -24,6 +24,7 @@
 #include <time.h>
 
 #include <maxscale/modinfo.h>
+#include <maxscale/query_classifier.h>
 
 MXS_BEGIN_DECLS
 
@@ -77,6 +78,7 @@ typedef struct
     char*         qc_args;                             /**< Arguments for the query classifier */
     int           query_retries;                       /**< Number of times a interrupted query is retried */
     time_t        query_retry_timeout;                 /**< Timeout for query retries */
+    qc_sql_mode_t qc_sql_mode;                         /**< The query classifier sql mode */
 } MXS_CONFIG;
 
 /**
