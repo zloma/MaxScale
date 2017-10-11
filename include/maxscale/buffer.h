@@ -106,8 +106,9 @@ struct buffer_object_st
 typedef struct
 {
     buffer_object_t *bufobj;   /*< List of objects referred to by GWBUF */
+    int32_t          slot;     /*< Which GWBUF slot does this buffer belong to */
     int32_t          refcount; /*< Reference count on the buffer */
-    uint32_t         info;     /*< Info bits */
+    uint64_t         info;     /*< Info bits */
     unsigned char    data[1];  /*< Actual memory that was allocated */
 } SHARED_BUF;
 
@@ -409,5 +410,7 @@ extern void dprintAllBuffers(void *pdcb);
  * @param log_level Log priority where the message is written
  */
 void gwbuf_hexdump(GWBUF* buffer, int log_level);
+
+void gwbuf_report();
 
 MXS_END_DECLS
