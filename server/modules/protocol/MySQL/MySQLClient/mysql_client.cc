@@ -491,7 +491,7 @@ int gw_read_client_event(DCB* dcb)
         }
         else
         {
-            if (nbytes_read > MYSQL_GET_PACKET_LEN(read_buffer))
+            if (nbytes_read > (int)MYSQL_GET_PACKET_LEN(read_buffer))
             {
                 // We read more data than was needed
                 dcb->dcb_readqueue = gwbuf_append(dcb->dcb_readqueue, read_buffer);
