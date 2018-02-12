@@ -952,7 +952,7 @@ gw_read_normal_data(DCB *dcb, GWBUF *read_buffer, int nbytes_read)
         size_t n_copied = gwbuf_copy_data(read_buffer, 0, MYSQL_HEADER_LEN, pktlen);
 
         if (n_copied != sizeof(pktlen) ||
-            nbytes_read < MYSQL_GET_PAYLOAD_LEN(pktlen) + MYSQL_HEADER_LEN)
+            nbytes_read < (int)(MYSQL_GET_PAYLOAD_LEN(pktlen) + MYSQL_HEADER_LEN))
         {
             dcb->dcb_readqueue = gwbuf_append(dcb->dcb_readqueue, read_buffer);
             return 0;
@@ -1498,7 +1498,7 @@ void update_current_command(DCB* dcb, GWBUF* buffer)
      * Empty packets are treated as COM_QUERY packets by default.
      */
     gwbuf_copy_data(buffer, MYSQL_HEADER_LEN, 1, &cmd);
-    proto->current_command = cmd;
+    proto->current_command = (mysql_server_cmd_t)cmd;
 
     /**
      * Now that we have the current command, we can check if this connection
