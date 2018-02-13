@@ -16,6 +16,9 @@
 #include "testconnections.h"
 
 using std::string;
+using std::cout;
+
+const int bufsize = 512;
 
 int main(int argc, char *argv[])
 {
@@ -29,15 +32,36 @@ int main(int argc, char *argv[])
     const string username = "proxy_user";
     const string proxypass = "proxy_pwd";
     const string maxscale_ip = test.maxscales->IP[0];
-    char* client_ip;
+    char client_userhost[bufsize];
     // Send the user query directly to backend.
-    if (find_field(test.repl->nodes[0], "SELECT USER();", "USER()", client_ip))
+    if (find_field(test.repl->nodes[0], "SELECT USER();", "USER()", client_userhost))
     {
         test.assert(false, "Could not read client ip.");
         return test.global_result;
     }
+    const char* client_ip = strstr(client_userhost, "@") + 1;
     cout << "Client ip is " << client_ip << "\n";
+    // At this point, no query to a backend will work as proxy network hasn't been set. Do it next.
+    string setting = "proxy_protocol_networks =  " + client_ip;
+test.repl->stop_node(0);    
+test.repl->stop_node(1);
+    test.repl->stop_node(2);
+    test.repl->stop_node(3);
+   test.repl->stash_server_settings(0);
+    test.repl->stash_server_settings(1);
+    test.repl->stash_server_settings(2);
+    test.repl->stash_server_settings(3);
 
+    test.repl->add_server_setting(0, setting.c_str());
+  test.repl->add_server_setting(1, setting.c_str());
+  test.repl->add_server_setting(2, setting.c_str());
+  test.repl->add_server_setting(3, setting.c_str());
+        test.repl->start_node(0, (char *) "");
+    test.repl->start_node(1, (char *) "");
+    test.repl->start_node(2, (char *) "");
+    test.repl->start_node(3, (char *) "");
+
+    execute_query(test.maxscales->conn_rwsplit[0], "SELECT @@log_bin;");
     execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%%'", username.c_str());
     execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), maxscale_ip.c_str());
     execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), client_ip);
@@ -107,6 +131,6 @@ int main(int argc, char *argv[])
     int rval = Test->global_result;
     delete Test;
     */
-    return rval;
+    return test.global_result;
 }
 
