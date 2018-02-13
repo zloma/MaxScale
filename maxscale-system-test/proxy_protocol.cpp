@@ -38,19 +38,19 @@ int main(int argc, char *argv[])
     }
     cout << "Client ip is " << client_ip << "\n";
 
-    execute_query(test->maxscales->conn_rwsplit[0], "DROP USER '%s'@'%%'", username.c_str());
-    execute_query(test->maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), maxscale_ip.c_str());
-    execute_query(test->maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), client_ip);
+    execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%%'", username.c_str());
+    execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), maxscale_ip.c_str());
+    execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%s'", username.c_str(), client_ip);
 
     cout << "Creating user '"<< username << "' \n";
     
-    test.try_query(test->maxscales->conn_rwsplit[0], (char *) "CREATE USER '%s'@'%s' identified by '%s'",
+    test.try_query(test.maxscales->conn_rwsplit[0], (char *) "CREATE USER '%s'@'%s' identified by '%s'",
         username.c_str(), client_ip);
-    test.try_query(test->maxscales->conn_rwsplit[0], (char *) "GRANT SELECT ON test.* TO '%s'@'%s'",
+    test.try_query(test.maxscales->conn_rwsplit[0], (char *) "GRANT SELECT ON test.* TO '%s'@'%s'",
         username.c_str(), client_ip);
-    test.try_query(test->maxscales->conn_rwsplit[0], (char *) "FLUSH PRIVILEGES;");
-    test.try_query(test->maxscales->conn_rwsplit[0], (char *) "DROP TABLE IF EXISTS t1");
-    test.try_query(test->maxscales->conn_rwsplit[0], (char *) "CREATE TABLE t1 (x1 int, fl int)");
+    test.try_query(test.maxscales->conn_rwsplit[0], (char *) "FLUSH PRIVILEGES;");
+    test.try_query(test.maxscales->conn_rwsplit[0], (char *) "DROP TABLE IF EXISTS t1");
+    test.try_query(test.maxscales->conn_rwsplit[0], (char *) "CREATE TABLE t1 (x1 int, fl int)");
 /*
     Test->tprintf("Changing user... \n");
     Test->add_result(mysql_change_user(Test->maxscales->conn_rwsplit[0], (char *) "user", (char *) "pass2", (char *) "test") ,
