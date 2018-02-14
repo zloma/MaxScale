@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     const char* client_ip = strstr(client_userhost, "@") + 1;
     cout << "Client ip is " << client_ip << "\n";
     // At this point, no query to a backend will work as proxy network hasn't been set. Do it next.
-    string setting = "proxy_protocol_networks =  " + client_ip;
+    string setting = string("proxy_protocol_networks =  ") + client_ip;
     add_setting_all_servers(test, setting);
 
     execute_query(test.maxscales->conn_rwsplit[0], "SELECT @@log_bin;");
