@@ -194,6 +194,7 @@ open_close_connections
 pers_01
 pers_02
 prepared_statement
+proxy_protocol
 readconnrouter_master
 readconnrouter_slave
 regexfilter1
