@@ -20,6 +20,47 @@ using std::cout;
 
 const int bufsize = 512;
 
+void add_setting_all_servers(TestConnections& test, const string& setting)
+{
+    test.repl->stop_node(0);    
+    test.repl->stop_node(1);
+    test.repl->stop_node(2);
+    test.repl->stop_node(3);
+
+    test.repl->stash_server_settings(0);
+    test.repl->stash_server_settings(1);
+    test.repl->stash_server_settings(2);
+    test.repl->stash_server_settings(3);
+
+    test.repl->add_server_setting(0, setting.c_str());
+    test.repl->add_server_setting(1, setting.c_str());
+    test.repl->add_server_setting(2, setting.c_str());
+    test.repl->add_server_setting(3, setting.c_str());
+
+    test.repl->start_node(0, (char *) "");
+    test.repl->start_node(1, (char *) "");
+    test.repl->start_node(2, (char *) "");
+    test.repl->start_node(3, (char *) "");
+}
+
+void restore_settings_all_servers(TestConnections& test)
+{
+    test.repl->stop_node(0);    
+    test.repl->stop_node(1);
+    test.repl->stop_node(2);
+    test.repl->stop_node(3);
+
+    test.repl->restore_server_settings(0);
+    test.repl->restore_server_settings(1);
+    test.repl->restore_server_settings(2);
+    test.repl->restore_server_settings(3);
+
+    test.repl->start_node(0, (char *) "");
+    test.repl->start_node(1, (char *) "");
+    test.repl->start_node(2, (char *) "");
+    test.repl->start_node(3, (char *) "");
+}
+
 int main(int argc, char *argv[])
 {
     TestConnections test(argc, argv);
@@ -43,23 +84,7 @@ int main(int argc, char *argv[])
     cout << "Client ip is " << client_ip << "\n";
     // At this point, no query to a backend will work as proxy network hasn't been set. Do it next.
     string setting = "proxy_protocol_networks =  " + client_ip;
-test.repl->stop_node(0);    
-test.repl->stop_node(1);
-    test.repl->stop_node(2);
-    test.repl->stop_node(3);
-   test.repl->stash_server_settings(0);
-    test.repl->stash_server_settings(1);
-    test.repl->stash_server_settings(2);
-    test.repl->stash_server_settings(3);
-
-    test.repl->add_server_setting(0, setting.c_str());
-  test.repl->add_server_setting(1, setting.c_str());
-  test.repl->add_server_setting(2, setting.c_str());
-  test.repl->add_server_setting(3, setting.c_str());
-        test.repl->start_node(0, (char *) "");
-    test.repl->start_node(1, (char *) "");
-    test.repl->start_node(2, (char *) "");
-    test.repl->start_node(3, (char *) "");
+    add_setting_all_servers(test, setting);
 
     execute_query(test.maxscales->conn_rwsplit[0], "SELECT @@log_bin;");
     execute_query(test.maxscales->conn_rwsplit[0], "DROP USER '%s'@'%%'", username.c_str());
@@ -75,6 +100,8 @@ test.repl->stop_node(1);
     test.try_query(test.maxscales->conn_rwsplit[0], (char *) "FLUSH PRIVILEGES;");
     test.try_query(test.maxscales->conn_rwsplit[0], (char *) "DROP TABLE IF EXISTS t1");
     test.try_query(test.maxscales->conn_rwsplit[0], (char *) "CREATE TABLE t1 (x1 int, fl int)");
+    
+    restore_settings_all_servers(test);
 /*
     Test->tprintf("Changing user... \n");
     Test->add_result(mysql_change_user(Test->maxscales->conn_rwsplit[0], (char *) "user", (char *) "pass2", (char *) "test") ,
