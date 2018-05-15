@@ -1,0 +1,21 @@
+{
+    "rules": [
+        {
+            "replace": {
+                "column": "Phone"
+            },
+            "with": {
+		"fill": "X"
+            },
+            "applies_to" : [ "'skysql'" ],
+            "exempted" : [ "'maxskysql'" ]
+        },
+        {
+            "obfuscate": {
+                "column": "Name"
+            },
+            "applies_to" : [ "'skysql'" ],
+            "exempted" : [ "'maxskysql'" ]
+        }
+    ]
+}
