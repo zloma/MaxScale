@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         local_result = 0;
 
         sprintf(str, "rules%d", i);
-        copy_rules(Test, str, rules_dir);
+        copy_rules(Test, str, rules_dir, 0);
 
         Test->maxscales->restart_maxscale(0);
         Test->maxscales->connect_rwsplit(0);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     {
         Test->tprintf("Trying at_times clause");
     }
-    copy_rules(Test, (char *) "rules_at_time", rules_dir);
+    copy_rules(Test, (char *) "rules_at_time", rules_dir, 0);
 
 
     if (Test->verbose)
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
     Test->tprintf("Trying limit_queries clause");
     Test->tprintf("Copying rules to Maxscale machine: %s", str);
-    copy_rules(Test, (char *) "rules_limit_queries", rules_dir);
+    copy_rules(Test, (char *) "rules_limit_queries", rules_dir, 0);
 
     Test->maxscales->start_maxscale(0);
     Test->maxscales->connect_rwsplit(0);

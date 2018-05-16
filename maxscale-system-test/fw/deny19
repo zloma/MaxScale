@@ -1,0 +1,2 @@
+select * from mysql.user;
+SELECT x1 FROM t1 WHERE fl=1;

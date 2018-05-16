@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     Test->maxscales->stop_maxscale(0);
     char first_rule[] = "rules1";
-    copy_rules(Test, first_rule, rules_dir);
+    copy_rules(Test, first_rule, rules_dir, 0);
     Test->maxscales->start_maxscale(0);
     Test->maxscales->connect_rwsplit(0);
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
         char str[1024];
         sprintf(str, "rules%d", i);
         Test->set_timeout(180);
-        copy_rules(Test, str, rules_dir);
+        copy_rules(Test, str, rules_dir, 0);
         Test->maxscales->ssh_node(0, "maxadmin call command dbfwfilter rules/reload Database-Firewall", true);
 
         int local_result = 0;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     }
 
     Test->tprintf("Trying rules with syntax error\n");
-    copy_rules(Test, (char *) "rules_syntax_error", rules_dir);
+    copy_rules(Test, (char *) "rules_syntax_error", rules_dir, 0);
 
     char *output = Test->maxscales->ssh_node_output(0,
                                                     "maxadmin call command dbfwfilter rules/reload Database-Firewall", true, &exit_code);

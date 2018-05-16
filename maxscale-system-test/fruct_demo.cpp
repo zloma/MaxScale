@@ -9,6 +9,22 @@
 #include "maxadmin_operations.h"
 #include "sql_t1.h"
 #include "fw_copy_rules.h"
+#include "keepalived_func.h"
+
+const char sql1[] = "CREATE TABLE sales ( \
+                  Date DATETIME, \
+                  ClientID VARCHAR(100), \
+              Name VARCHAR(100), \
+              Phone VARCHAR(16), \
+              Sum INT \
+                ); \
+        INSERT INTO sales (Date, ClientID, Name, Phone, Sum) VALUES (\"2018-05-16\", \"1\", \"Alice\", \"358-50-123456\", \"100\"); \
+        INSERT INTO sales (Date, ClientID, Name, Phone, Sum) VALUES (\"2018-05-17\", \"2\", \"Bob\", \"358-50-654321\", \"200\"); \
+        INSERT INTO sales (Date, ClientID, Name, Phone, Sum) VALUES (\"2018-05-17\", \"3\", \"Charlie\", \"358-50-162534\", \"50\"); ";
+
+const char sql2[] = "INSERT INTO t1 (fl, x1) VALUES(1, 2); \
+                INSERT INTO t1 (fl, x1) VALUES(2, 3);\
+                INSERT INTO t1 (fl, x1) VALUES(4, 5);";
 
 int main(int argc, char *argv[])
 {
@@ -28,24 +44,57 @@ int main(int argc, char *argv[])
                                 "chown vagrant:vagrant rules",
                                 Test->maxscales->access_homedir[0]);
 
+    Test->maxscales->ssh_node_f(1, true, "cd %s;"
+                                "rm -rf rules;"
+                                "mkdir rules;"
+                                "chown vagrant:vagrant rules",
+                                Test->maxscales->access_homedir[1]);
+
     sprintf(rules_dir, "%s/fw/", test_dir);
 
-    int i = 4;
+    int i = 19;
 
     Test->set_timeout(180);
     local_result = 0;
 
 
     sprintf(str, "rules%d", i);
-    copy_rules(Test, str, rules_dir);
+    copy_rules(Test, str, rules_dir, 0);
+    copy_rules(Test, str, rules_dir, 1);
 
     Test->maxscales->copy_to_node(0, "masking.json", "/home/vagrant/rules/");
+    Test->maxscales->copy_to_node(1, "masking.json", "/home/vagrant/rules/");
     Test->repl->require_gtid(true);
     Test->repl->start_replication();
+
+    Test->tprintf("Maxscale_N %d\n", Test->maxscales->N);
+    if (Test->maxscales->N < 2)
+    {
+        Test->tprintf("At least 2 Maxscales are needed for this test. Exiting\n");
+        exit(0);
+    }
+
     Test->tprintf("Starting Maxscale with all filters\n");
     Test->maxscales->restart_maxscale(0);
+    Test->maxscales->restart_maxscale(1);
     sleep(5);
+    Test->check_maxscale_alive(0);
+    Test->check_maxscale_alive(1);
+
+    // Get test client IP, replace last number in it with 253 and use it as Virtual IP
+    configure_keepalived(Test, (char *) "");
+
     Test->maxscales->connect_rwsplit(0);
+
+    Test->tprintf("Creating t1\n");
+    create_t1(Test->maxscales->conn_rwsplit[0]);
+    Test->tprintf("Creating sales'\n");
+    Test->repl->connect();
+    Test->tprintf(sql1);
+    Test->try_query(Test->repl->nodes[0], sql1);
+    Test->tprintf("Inserting inti  t1\n%s\n", sql2);
+    Test->try_query(Test->repl->nodes[0], sql2);
+    Test->repl->close_connections();
 
     sprintf(pass_file, "%s/fw/pass%d", test_dir, i);
     sprintf(deny_file, "%s/fw/deny%d", test_dir, i);

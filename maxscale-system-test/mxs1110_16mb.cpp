@@ -23,11 +23,11 @@ int main(int argc, char *argv[])
     Test->maxscales->copy_to_node_legacy("./cache/cache_basic/cache_rules.json", "~/", 0);
 
     Test->maxscales->ssh_node_f(0, true, "cd %s;"
-                       "rm -rf rules;"
-                       "mkdir rules;"
-                       "chown vagrant:vagrant rules",
-                       Test->maxscales->access_homedir[0]);
-    copy_rules(Test, (char *) "rules2", "./fw/");
+                                "rm -rf rules;"
+                                "mkdir rules;"
+                                "chown vagrant:vagrant rules",
+                                Test->maxscales->access_homedir[0]);
+    copy_rules(Test, (char *) "rules2", "./fw/", 0);
 
     Test->maxscales->start_maxscale(0);
 

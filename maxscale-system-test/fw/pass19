@@ -1,0 +1,2 @@
+select user,host from mysql.user where user="skysql";
+delete from t1 where fl=1;

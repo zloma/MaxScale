@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     test->maxscales->stop_maxscale(0);
 
     sprintf(rules_dir, "%s/fw/", test_dir);
-    copy_rules(test, (char*) "rules_actions", rules_dir);
+    copy_rules(test, (char*) "rules_actions", rules_dir, 0);
 
     test->set_timeout(60);
     test->maxscales->start_maxscale(0);

@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 
     test->tprintf("Creating rules\n");
     test->maxscales->stop_maxscale(0);
-    copy_rules(test, (char*) "rules_logging", rules_dir);
+    copy_rules(test, (char*) "rules_logging", rules_dir, 0);
 
     test->maxscales->start_maxscale(0);
     test->set_timeout(20);

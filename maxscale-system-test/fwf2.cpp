@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
         Test->stop_maxscale(0);
 
         sprintf(str, "rules%d", i);
-        copy_rules(Test, str, rules_dir);
+        copy_rules(Test, str, rules_dir, 0);
 
         Test->maxscales->start_maxscale(0);
         Test->maxscales->connect_rwsplit(0);

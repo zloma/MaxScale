@@ -65,7 +65,7 @@ int main(int argc, char** argv)
         /** Create rule file with syntax error */
         truncate(temp_rules, 0);
         create_rule(rules_failure[i], users_ok[0]);
-        copy_rules(&test, (char*)temp_rules, (char*)test_dir);
+        copy_rules(&test, (char*)temp_rules, (char*)test_dir, 0);
 
         test.tprintf("Testing rule: %s\n", rules_failure[i]);
         test.add_result(test.maxscales->start_maxscale(0) == 0, "MaxScale should fail to start");
