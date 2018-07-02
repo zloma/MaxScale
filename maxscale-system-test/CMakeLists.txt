@@ -1019,6 +1019,10 @@ add_test_executable(mxs1926_killed_server.cpp mxs1926_killed_server mxs1926_kill
 # https://jira.mariadb.org/browse/MXS-1932
 add_test_executable(mxs1932_hidden_cnf.cpp mxs1932_hidden_cnf replication LABELS REPL_BACKEND)
 
+# MXS-1849: Table family sharding router
+# https://jira.mariadb.org/browse/MXS-1849
+add_test_executable(mxs1849_table_sharding.cpp mxs1849_table_sharding replication LABELS schemarouter REPL_BACKEND BREAKS_REPL)
+
 configure_file(templates.h.in templates.h @ONLY)
 
 include(CTest)
