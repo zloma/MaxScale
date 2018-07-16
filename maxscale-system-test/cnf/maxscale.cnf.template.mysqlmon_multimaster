@@ -4,8 +4,8 @@ log_warning=1
 
 [MySQL Monitor]
 type=monitor
-module=mmmon
-servers= server1, server2
+module=mysqlmon
+servers= server1, server2, server3, server4
 user=maxskysql
 passwd= skysql
 detect_stale_master=0
@@ -14,7 +14,7 @@ monitor_interval=1000
 [RW Split Router]
 type=service
 router= readwritesplit
-servers=server1,     server2
+servers=server1, server2, server3, server4
 user=maxskysql
 passwd=skysql
 router_options=slave_selection_criteria=LEAST_ROUTER_CONNECTIONS
@@ -40,7 +40,6 @@ type=listener
 service=RW Split Router
 protocol=MySQLClient
 port=4006
-#socket=/tmp/rwsplit.sock
 
 [Read Connection Listener Slave]
 type=listener
@@ -62,7 +61,6 @@ router=cli
 type=listener
 service=CLI
 protocol=maxscaled
-#address=localhost
 socket=default
 
 [server1]
@@ -77,3 +75,14 @@ address=###node_server_IP_2###
 port=###node_server_port_2###
 protocol=MySQLBackend
 
+[server3]
+type=server
+address=###node_server_IP_3###
+port=###node_server_port_3###
+protocol=MySQLBackend
+
+[server4]
+type=server
+address=###node_server_IP_4###
+port=###node_server_port_4###
+protocol=MySQLBackend
