@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     const char readonly_on_query[] = "SET GLOBAL read_only='ON'";
 
     TestConnections test(argc, argv);
-if (0) {
+
     test.tprintf("Test 1 - Configure all servers into a multi-master ring with one slave");
 
     test.set_timeout(120);
@@ -175,7 +175,7 @@ if (0) {
     check_group(test, "server2", 1);
     check_group(test, "server3", 1);
     check_group(test, "server4", 0);
-}
+
     test.tprintf("Test 5 - Create two distinct groups");
 
     test.set_timeout(120);
@@ -217,13 +217,13 @@ if (0) {
     check_group(test, "server2", 1);
     check_group(test, "server3", 2);
     check_group(test, "server4", 2);
-if (0) {
+
     test.repl->execute_query_all_nodes(reset_query);
     test.repl->connect();
     change_master(test, 1, 0);
     change_master(test, 2, 0);
     change_master(test, 3, 0);
     test.repl->fix_replication();
-}
+
     return test.global_result;
 }
