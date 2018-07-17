@@ -77,8 +77,8 @@ void check_group(TestConnections& test , const char *server, int expected_group)
         }
     }
 
-    test.add_result(found_group == expected_group,
-                     "Server '%s', expected group '%s', not '%s'", server, expected_group, found_group);
+    test.assert(found_group == expected_group, "Server '%s', expected group '%d', not '%d'",
+		server, expected_group, (int)found_group);
 }
 
 void change_master(TestConnections& Test, int slave, int master)
@@ -94,11 +94,12 @@ int main(int argc, char *argv[])
     const char mm_master_states[] = "Master, Running";
     const char mm_slave_states[] = "Relay Master, Slave, Running";
     const char slave_states[] = "Slave, Running";
+    const char running_state[] = "Running";
     const char reset_query[] = "STOP SLAVE; RESET SLAVE ALL; RESET MASTER; SET GLOBAL read_only='OFF'";
     const char readonly_on_query[] = "SET GLOBAL read_only='ON'";
 
     TestConnections test(argc, argv);
-
+if (0) {
     test.tprintf("Test 1 - Configure all servers into a multi-master ring with one slave");
 
     test.set_timeout(120);
@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
     check_group(test, "server2", 1);
     check_group(test, "server3", 1);
     check_group(test, "server4", 0);
-if (0) {
+
     test.tprintf("Test 2 - Set nodes 0 and 1 into read-only mode");
 
     test.set_timeout(120);
@@ -174,7 +175,7 @@ if (0) {
     check_group(test, "server2", 1);
     check_group(test, "server3", 1);
     check_group(test, "server4", 0);
-
+}
     test.tprintf("Test 5 - Create two distinct groups");
 
     test.set_timeout(120);
@@ -187,15 +188,18 @@ if (0) {
 
     sleep(2);
 
+    // Even though the servers are in two distinct groups, only one of them
+    // contains a master and a slave. Only one master may exist in a cluster
+    // at once, since by definition this is the server to which routers may
+    // direct writes.
     check_status(test, "server1", mm_master_states);
     check_status(test, "server2", mm_slave_states);
-    check_status(test, "server3", mm_master_states);
-    check_status(test, "server4", mm_slave_states);
+    check_status(test, "server3", running_state);
+    check_status(test, "server4", running_state);
     check_group(test, "server1", 1);
     check_group(test, "server2", 1);
     check_group(test, "server3", 2);
     check_group(test, "server4", 2);
-
 
     test.tprintf("Test 6 - Set nodes 1 and 3 into read-only mode");
 
@@ -207,18 +211,19 @@ if (0) {
 
     check_status(test, "server1", mm_master_states);
     check_status(test, "server2", mm_slave_states);
-    check_status(test, "server3", mm_master_states);
-    check_status(test, "server4", mm_slave_states);
+    check_status(test, "server3", running_state);
+    check_status(test, "server4", running_state);
     check_group(test, "server1", 1);
     check_group(test, "server2", 1);
     check_group(test, "server3", 2);
     check_group(test, "server4", 2);
-}
+if (0) {
     test.repl->execute_query_all_nodes(reset_query);
     test.repl->connect();
     change_master(test, 1, 0);
     change_master(test, 2, 0);
     change_master(test, 3, 0);
     test.repl->fix_replication();
+}
     return test.global_result;
 }
