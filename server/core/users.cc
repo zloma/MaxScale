@@ -19,14 +19,178 @@
 #include <string>
 #include <algorithm>
 
+#include <ldap.h>
+#include <sasl/sasl.h>
+
 #include <maxscale/users.h>
 #include <maxscale/authenticator.h>
 #include <maxscale/spinlock.hh>
 #include <maxscale/log.h>
 #include <maxscale/jansson.hh>
+#include <maxscale/utils.hh>
+#include <maxscale/adminusers.h>
+
+namespace std
+{
+
+template<>
+struct default_delete<LDAP>
+{
+    void operator()(LDAP* ld)
+    {
+        ldap_unbind_ext(ld, nullptr, nullptr);
+    }
+};
+
+template<>
+struct default_delete<berval>
+{
+    void operator()(berval* bv)
+    {
+        ldap_memfree(bv);
+    }
+};
+
+template<>
+struct default_delete<LDAPMessage>
+{
+    void operator()(LDAPMessage* msg)
+    {
+        ldap_msgfree(msg);
+    }
+};
+}
 
 namespace
 {
+
+struct Auth
+{
+    std::string user;
+    std::string password;
+};
+
+int sasl_cb(LDAP* ld, unsigned flags, void* defaults, void* in)
+{
+    if (ld == NULL)
+    {
+        return LDAP_PARAM_ERROR;
+    }
+
+    Auth* auth = static_cast<Auth*>(defaults);
+
+    for (sasl_interact_t* interact = static_cast<sasl_interact_t*>(in);
+         interact->id != SASL_CB_LIST_END; interact++)
+    {
+        if (interact->id == SASL_CB_AUTHNAME)
+        {
+            interact->result = auth->user.c_str();
+            interact->len = auth->user.length();
+        }
+        else if (interact->id == SASL_CB_PASS)
+        {
+            interact->result = auth->password.c_str();
+            interact->len = auth->password.length();
+        }
+    }
+
+    return LDAP_SUCCESS;
+}
+
+std::unique_ptr<LDAP> bind_ldap_user(const std::string& user, const std::string& password)
+{
+    Auth authdata {user, password};
+    std::unique_ptr<LDAP> rval;
+    LDAP* ld = nullptr;
+
+    if (int err = ldap_initialize(&ld, "ldapi:///"))
+    {
+        MXS_ERROR("LDAP initialization failed: %s", ldap_err2string(err));
+    }
+    else
+    {
+        rval.reset(ld);
+
+        // Boilerplate code required for all modern programs
+        int protocol = LDAP_VERSION3;
+        ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &protocol);
+
+        if (int err = ldap_sasl_interactive_bind_s(ld,
+                                                   NULL,
+                                                   "DIGEST-MD5",
+                                                   NULL,
+                                                   NULL,
+                                                   LDAP_SASL_QUIET,
+                                                   sasl_cb,
+                                                   &authdata))
+        {
+            MXS_INFO("LDAP bind failed: %s", ldap_err2string(err));
+            rval.reset();
+        }
+    }
+
+    return rval;
+}
+
+bool ldap_user_is_admin(const std::unique_ptr<LDAP>& ld)
+{
+    bool rval = false;
+    berval* out = NULL;
+
+    if (int err = ldap_whoami_s(ld.get(), &out, NULL, NULL))
+    {
+        MXS_ERROR("LDAP WHOAMI failed: %s", ldap_err2string(err));
+        return false;
+    }
+
+    std::unique_ptr<berval> u_out(out);
+    std::string dn(out->bv_val + 3, out->bv_len - 3);   // Remove the dn: prefix
+    LDAPMessage* res;
+    char member[] = "member";
+    char* attrs[] = {member, nullptr};
+
+    // NOTE: this requires that the user is able to view the contents of the group it is a part of
+    //       it might be better to have a separate user for MaxScale that does the lookup to make it
+    //       possible to remove read permissions on the group from the group members
+
+    if (int err = ldap_search_ext_s(ld.get(),
+                                    "cn=Admins,ou=People,dc=localhost",     // TODO: make this configurable
+                                    LDAP_SCOPE_BASE,
+                                    NULL,
+                                    attrs,
+                                    0,
+                                    NULL,
+                                    NULL,
+                                    NULL,
+                                    10,
+                                    &res))
+    {
+        MXS_ERROR("LDAP search failed: %s", ldap_err2string(err));
+        return false;
+    }
+
+    std::unique_ptr<LDAPMessage> u_res(res);
+    BerElement* berptr;
+
+    for (char* attr = ldap_first_attribute(ld.get(), res, &berptr); attr;
+         attr = ldap_next_attribute(ld.get(), res, berptr))
+    {
+        mxb_assert_message(strcasecmp(attr, "member") == 0, "Only the member attribute should be returned");
+        auto val = ldap_get_values_len(ld.get(), res, attr);
+
+        for (int i = 0; val[i]; i++)
+        {
+            if (strcasecmp(dn.c_str(), val[i]->bv_val) == 0)
+            {
+                rval = true;
+            }
+        }
+
+        ldap_value_free_len(val);
+    }
+
+    return rval;
+}
 
 static const char STR_BASIC[] = "basic";
 static const char STR_ADMIN[] = "admin";
@@ -121,6 +285,10 @@ public:
         if (it != m_data.end() && it->second.permissions == perm)
         {
             rval = true;
+        }
+        else if (auto ld = bind_ldap_user(user, password))
+        {
+            rval = ldap_user_is_admin(ld);
         }
 
         return rval;
@@ -299,6 +467,10 @@ bool users_auth(USERS* users, const char* user, const char* password)
     if (u->get(user, &info))
     {
         rval = info.password == mxs::crypt(password, ADMIN_SALT);
+    }
+    else if (password && bind_ldap_user(user, password))
+    {
+        rval = true;
     }
 
     return rval;

@@ -74,6 +74,7 @@ target_link_libraries(maxscale-common
   gcrypt
   ${MICROHTTPD_LIBRARIES}
   ${CURL_LIBRARIES}
+  ldap
 )
 
 find_library(HAVE_LIBDL NAMES dl)
