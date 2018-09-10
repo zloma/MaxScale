@@ -399,24 +399,6 @@ bool admin_linux_account_enabled(const char* uname)
     return rv;
 }
 
-#define MXS_CRYPT_SIZE 60
-
-void mxs_crypt(const char* password, const char* salt, char* output)
-{
-#if HAVE_GLIBC
-    struct crypt_data cdata;
-    cdata.initialized = 0;
-    char* pw = crypt_r(password, salt, &cdata);
-    snprintf(output, MXS_CRYPT_SIZE, "%s", pw);
-#else
-    static SPINLOCK mxs_crypt_lock = SPINLOCK_INIT;
-    spinlock_acquire(&mxs_crypt_lock);
-    char* pw = crypt(password, salt);
-    snprintf(output, MXS_CRYPT_SIZE, "%s", pw);
-    spinlock_release(&mxs_crypt_lock);
-#endif
-}
-
 /**
  * Add insecure remote (network) basic user.
  *

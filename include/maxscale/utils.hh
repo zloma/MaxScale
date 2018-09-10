@@ -655,6 +655,16 @@ uint64_t get_byteN(const uint8_t* ptr, int bytes);
  */
 uint8_t* set_byteN(uint8_t* ptr, uint64_t value, int bytes);
 
+/**
+ * C++ wrapper function for the `crypt` password hashing
+ *
+ * @param password Password to hash
+ * @param salt     Salt to use (see man crypt)
+ *
+ * @return The hashed password
+ */
+std::string crypt(std::string password, std::string salt);
+
 namespace http
 {
 
