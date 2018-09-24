@@ -947,7 +947,7 @@ static SERVER_REF* server_ref_create(SERVER* server)
         sref->next = NULL;
         sref->server = server;
         // all servers have weight 1.0, when weights are not configured.
-        sref->inv_weight = 1.0;
+        sref->server_weight = 1.0;
         sref->connections = 0;
         sref->active = true;
     }
@@ -1713,7 +1713,7 @@ static void service_calculate_weights(SERVICE* service)
 
         if (!weights_are_in_use)
         {
-            MXS_WARNING("Weighting Parameter for service '%s' will be ignored as "
+            MXS_WARNING("Weighting parameters for service '%s' will be ignored as "
                         "no servers have values for the parameter '%s'.",
                         service->name,
                         weightby);
@@ -1736,7 +1736,7 @@ static void service_calculate_weights(SERVICE* service)
                                     server->server->name);
                         config_weight = 0;
                     }
-                    server->inv_weight = 1.0 - config_weight / total;
+                    server->server_weight = config_weight / total;
                 }
                 else
                 {
@@ -1745,7 +1745,7 @@ static void service_calculate_weights(SERVICE* service)
                                 " will only be used if no other servers are available.",
                                 weightby,
                                 server->server->name);
-                    server->inv_weight = 1.0;
+                    server->server_weight = 0;
                 }
             }
         }
