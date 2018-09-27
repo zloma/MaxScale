@@ -2643,9 +2643,16 @@ monitorMain(void *arg)
         /* Check if any slave servers have read-only off and turn it on if user so wishes. Again, do not
          * perform this if cluster has been modified this loop since it may not be clear which server
          * should be a slave. */
-        if (!config_get_global_options()->passive && handle->enforce_read_only_slaves && !cluster_modified)
+        if (!config_get_global_options()->passive && handle->enforce_read_only_slaves)
         {
-            enforce_read_only_on_slaves(handle);
+            if (cluster_modified)
+            {
+                MXS_NOTICE("Cluster was modified during this monitor tick, not checking read_only.");
+            }
+            else
+            {
+                enforce_read_only_on_slaves(handle);
+            }
         }
 
         mon_hangup_failed_servers(mon);
@@ -5099,13 +5106,26 @@ static bool check_sql_files(MYSQL_MONITOR* mon)
 
 static void enforce_read_only_on_slaves(MYSQL_MONITOR* mon)
 {
+    MXS_NOTICE("Checking read_only on slaves.");
     const char QUERY[] = "SET GLOBAL read_only=1;";
     for (MXS_MONITORED_SERVER* mon_srv = mon->monitor->monitored_servers; mon_srv; mon_srv = mon_srv->next)
     {
         MySqlServerInfo* serv_info = get_server_info(mon, mon_srv);
-        if (SERVER_IS_SLAVE(mon_srv->server) && !serv_info->read_only && !serv_info->binlog_relay)
+        const char* name = mon_srv->server->unique_name;
+        if (!SERVER_IS_SLAVE(mon_srv->server))
         {
-            const char* name = mon_srv->server->unique_name;
+            MXS_NOTICE("%s is not a slave, not setting read_only.", name);
+        }
+        else if (serv_info->read_only)
+        {
+            MXS_NOTICE("%s is already in read_only mode, not setting read_only.", name);
+        }
+        else if (serv_info->binlog_relay)
+        {
+            MXS_NOTICE("%s is a binlog relay, not setting read_only.", name);
+        }
+        else
+        {
             if (mxs_mysql_query(mon_srv->con, QUERY) == 0)
             {
                 MXS_NOTICE("read_only set to ON on server '%s'.", name);
