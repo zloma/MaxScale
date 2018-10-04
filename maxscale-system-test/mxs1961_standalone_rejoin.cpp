@@ -4,6 +4,7 @@
 
 #include "testconnections.h"
 #include <iostream>
+#include <maxbase/assert.h>
 
 using namespace std;
 
